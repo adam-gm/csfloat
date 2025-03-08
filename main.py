@@ -31,13 +31,17 @@ desertHydraParameters={
 
 def getCrazyCheap():
         items = []
-        response = requests.get(csfloatAPIlink,headers=header,params={"sort_by":"most_recent","category":1,"type":"buy_now","max_price":165000})
+        response = requests.get(csfloatAPIlink,headers=header,params={"sort_by":"most_recent","category":0,"type":"buy_now","max_price":165000})
         jsonData = response.json()
 
         for i in range(len(jsonData['data'])):
             currentItem = jsonData['data'][i]
-            if currentItem['price'] < currentItem['reference']['base_price']:
-                items.append({"Listing id":currentItem['id'],"Item name":currentItem['item']['market_hash_name'],"Profit margin":round(100*(1-currentItem['price']/currentItem['reference']['base_price']),3)})
+            if currentItem['reference']['base_price'] > currentItem['reference']['predicted_price']:
+                if currentItem['price'] < currentItem['reference']['predicted_price']:
+                    items.append({"Listing id":currentItem['id'],"Item name":currentItem['item']['market_hash_name'],"Profit margin":round(100*(1-currentItem['price']/currentItem['reference']['predicted_price']),3)})
+            else:
+                if currentItem['price'] < currentItem['reference']['base_price']:
+                    items.append({"Listing id":currentItem['id'],"Item name":currentItem['item']['market_hash_name'],"Profit margin":round(100*(1-currentItem['price']/currentItem['reference']['base_price']),3)})
 
         return sorted(items,key=lambda d:d['Profit margin'],reverse=False)
 
@@ -50,12 +54,14 @@ def getLowStickerPercentage():
             currentItem = jsonData['data'][i]
             stickerPrice = sum([sticker.get("reference",{}).get("price",0)/100 for sticker in currentItem["item"].get("stickers",[])])
             if stickerPrice>0:
-                if (currentItem['price']-currentItem['reference']['base_price'])/stickerPrice < 0.1:
-                    items.append({"Listing id":currentItem['id'],"Item name":currentItem['item']['market_hash_name'],"Profit margin":round(100*(1-currentItem['price']/currentItem['reference']['base_price']),3)})
-        if len(items)==0:
-              return 
-        else:
-            return sorted(items,key=lambda d:d['Profit margin'],reverse=False)
+                if currentItem['reference']['base_price'] > currentItem['reference']['predicted_price']:
+                    if (currentItem['price']-currentItem['reference']['predicted_price'])/stickerPrice < 0.1:
+                         items.append({"Listing id":currentItem['id'],"Item name":currentItem['item']['market_hash_name'],"Profit margin":round(100*(1-currentItem['price']/currentItem['reference']['predicted_price']),3)})
+                else:     
+                    if (currentItem['price']-currentItem['reference']['base_price'])/stickerPrice < 0.1:
+                        items.append({"Listing id":currentItem['id'],"Item name":currentItem['item']['market_hash_name'],"Profit margin":round(100*(1-currentItem['price']/currentItem['reference']['base_price']),3)})
+        
+        return sorted(items,key=lambda d:d['Profit margin'],reverse=False)
 
 cheapItems = getCrazyCheap()
 pprint.pprint(cheapItems)
