@@ -1,7 +1,10 @@
 import requests
 class Skin:
     csfloatAPIlink = "https://csfloat.com/api/v1/listings"
-    api_key="Rd3UmYDMXvJlqwueoFJoaI11rpyuOHgv"
+    
+    with open("api_key.txt","r") as f:
+        api_key = f.readline()
+
     header={
     "Authorization": api_key
     }
