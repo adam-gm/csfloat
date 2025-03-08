@@ -21,6 +21,7 @@ class Skin:
             dataPoint = jsonData["data"][i]
             #print(dataPoint["item"]["market_hash_name"] ,"Price: ",dataPoint["price"]/100," USD","Listing id:",dataPoint["id"],"Stickers applied: ",[sticker["name"] for sticker in dataPoint["item"].get("stickers",[])])
             items.append({"Item": dataPoint["item"]["market_hash_name"],"Price": dataPoint["price"]/100,"Listing id":dataPoint["id"],"Stickers applied": [sticker["name"] for sticker in dataPoint["item"].get("stickers",[])]})
+             #.get for dictionaries returns the value after comma if the key does not exist. This is good for avoiding KeyError in terminal.
         return items
     
     def getCheapest(self,maxPrice):
@@ -31,6 +32,16 @@ class Skin:
             if itemList[i]["Price"] < maxPrice:
                 updatedList.append(itemList[i])
 
-        sortedItems = sorted(updatedList,key=lambda d:d["Price"])
-        print(sortedItems)
-        return sortedItems
+        self.cheapestItems = sorted(updatedList,key=lambda d:d["Price"]) #Sort array by price by using lambda function. Basically updatedList['price']
+
+
+    #Make method to return items cheaper than recommended
+    def getCrazyCheap(self):
+        items = []
+        response = requests.get(Skin.csfloatAPIlink,headers=Skin.header,params={"type":"buy_now","max_price":165000})
+        jsonData = response.json()
+
+        for i in range(len(jsonData['data'])):
+            currentItem = jsonData['data'][i]
+            if currentItem['price'] < currentItem['reference']['predicted_price']:
+                items.append({"Listing id":currentItem['id'],"Item name":currentItem['item']['market_hash_name'],"Profit after fee":(-currentItem['price']+currentItem['reference']['predicted_price'])*0.98})

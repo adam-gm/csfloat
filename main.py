@@ -1,10 +1,19 @@
 import requests
 import skinclass
+import pprint
 #api key csfloat: Rd3UmYDMXvJlqwueoFJoaI11rpyuOHgv
 
 #all listings: https://csfloat.com/api/v1/listings
 #specific listing: https://csfloat.com/api/v1/listings/<ID>
 
+csfloatAPIlink = "https://csfloat.com/api/v1/listings"
+
+with open("api_key.txt","r") as f:
+        api_key = f.readline()
+
+header={
+    "Authorization": api_key
+    }
 
 desertHydraParameters={
     "market_hash_name": "AWP | Desert Hydra (Field-Tested)",
@@ -16,19 +25,40 @@ desertHydraParameters={
     "max_price": 185000,
 }
 
-desertHydra = skinclass.Skin(desertHydraParameters)
-desertHydra.getCheapest(1650)
-# response = requests.get("https://csfloat.com/api/v1/listings",headers=header,params=parameters)
-# jsonData = response.json()
+#desertHydra = skinclass.Skin(desertHydraParameters)
+#desertHydra.getCheapest(1650)
+#print(desertHydra.cheapestItems)
 
-#heapHydras = []
+def getCrazyCheap():
+        items = []
+        response = requests.get(csfloatAPIlink,headers=header,params={"sort_by":"most_recent","category":1,"type":"buy_now","max_price":165000})
+        jsonData = response.json()
 
-# for i in range(len(jsonData["data"])):
-#     dataPoint = jsonData["data"][i]
-#     print("AWP Desert Hydra price: ",dataPoint["price"]/100," USD","Listing id:",dataPoint["id"],"Stickers applied: ",[sticker["name"] for sticker in dataPoint["item"].get("stickers",[])])
-#     if(dataPoint["price"]/100 < 1650):
-#         cheapHydras.append({"id": dataPoint["id"],"price": dataPoint["price"]/100,"Stickers":[sticker["name"] for sticker in dataPoint["item"].get("stickers",[])],"Float value": dataPoint["item"]["float_value"]})
-# #.get for dictionaries returns the value after comma if the key does not exist. This is good for avoiding KeyError in terminal.
-# print("Cheap hydras: ", sorted(cheapHydras,key=lambda d:d["price"])) #Sort array by AWP price. Basically cheapHydras['price']
+        for i in range(len(jsonData['data'])):
+            currentItem = jsonData['data'][i]
+            if currentItem['price'] < currentItem['reference']['base_price']:
+                items.append({"Listing id":currentItem['id'],"Item name":currentItem['item']['market_hash_name'],"Profit margin":round(100*(1-currentItem['price']/currentItem['reference']['base_price']),3)})
 
+        return sorted(items,key=lambda d:d['Profit margin'],reverse=False)
 
+def getLowStickerPercentage():
+        items = []
+        response = requests.get(csfloatAPIlink,headers=header,params={"sort_by":"most_recent","category":1,"type":"buy_now","max_price":165000})
+        jsonData = response.json()
+
+        for i in range(len(jsonData['data'])):
+            currentItem = jsonData['data'][i]
+            stickerPrice = sum([sticker.get("reference",{}).get("price",0)/100 for sticker in currentItem["item"].get("stickers",[])])
+            if stickerPrice>0:
+                if (currentItem['price']-currentItem['reference']['base_price'])/stickerPrice < 0.1:
+                    items.append({"Listing id":currentItem['id'],"Item name":currentItem['item']['market_hash_name'],"Profit margin":round(100*(1-currentItem['price']/currentItem['reference']['base_price']),3)})
+        if len(items)==0:
+              return 
+        else:
+            return sorted(items,key=lambda d:d['Profit margin'],reverse=False)
+
+cheapItems = getCrazyCheap()
+pprint.pprint(cheapItems)
+
+cheapStickeredItems = getLowStickerPercentage()
+pprint.pprint(cheapStickeredItems)
