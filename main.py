@@ -80,8 +80,8 @@ def getLowStickerPercentage():
 
 def timer(func1,func2):
      while True:
-        func1
-        func2
+        func1()
+        func2()
         time.sleep(90) #2 minutes
 
 def sendToDiscord(item):
@@ -101,7 +101,7 @@ def runShi2():
      for item in cheapStickeredItems:
         sendToDiscord(item)
 
-t = threading.Thread(target=timer,args=(runShi(),runShi2()))
+t = threading.Thread(target=timer,args=(runShi,runShi2))
 t.start()
 
 
