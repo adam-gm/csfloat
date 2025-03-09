@@ -1,6 +1,8 @@
 import requests
 import skinclass
 import pprint
+import threading
+import time
 #api key csfloat: Rd3UmYDMXvJlqwueoFJoaI11rpyuOHgv
 
 #all listings: https://csfloat.com/api/v1/listings
@@ -76,8 +78,34 @@ def getLowStickerPercentage():
 
         return sorted(items,key=lambda d:d['Profit margin'],reverse=False)
 
-cheapItems = getCrazyCheap()
-pprint.pprint(cheapItems)
+def timer(func1,func2):
+     while True:
+        func1()
+        func2()
+        time.sleep(20) #10 seconds
 
-cheapStickeredItems = getLowStickerPercentage()
-pprint.pprint(cheapStickeredItems)
+def sendToDiscord(item):
+    webhook_url = "https://discord.com/api/webhooks/1348120570822266891/yXXE86xTw4yJkJafiYJe_wHPzlCFcp0dhuCyJNZ-l1ikG758gemfjHNyo89dEC1LoY0B"
+    message = {
+        "content": f"{item['Item name']}, Profit margin: {item['Profit margin']} \n[Listing](https://csfloat.com/item/{item['Listing id']})"
+    }
+    requests.post(webhook_url, json=message)
+
+def runShi():
+     cheapItems = getCrazyCheap()
+     for item in cheapItems:
+        sendToDiscord(item)
+
+def runShi2():
+     cheapStickeredItems = getLowStickerPercentage()
+     for item in cheapStickeredItems:
+        sendToDiscord(item)
+
+t = threading.Thread(target=timer,args=(runShi,runShi2))
+t.start()
+
+
+     
+
+#pprint.pprint(cheapItems)
+#pprint.pprint(cheapStickeredItems)
