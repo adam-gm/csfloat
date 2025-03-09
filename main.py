@@ -80,14 +80,14 @@ def getLowStickerPercentage():
 
 def timer(func1,func2):
      while True:
-        func1()
-        func2()
-        time.sleep(20) #10 seconds
+        func1
+        func2
+        time.sleep(90) #2 minutes
 
 def sendToDiscord(item):
     webhook_url = "https://discord.com/api/webhooks/1348120570822266891/yXXE86xTw4yJkJafiYJe_wHPzlCFcp0dhuCyJNZ-l1ikG758gemfjHNyo89dEC1LoY0B"
     message = {
-        "content": f"{item['Item name']}, Profit margin: {item['Profit margin']} \n[Listing](https://csfloat.com/item/{item['Listing id']})"
+        "content": f"{item['Item name']}, Profit margin: {item['Profit margin']} \n [Listing](https://csfloat.com/item/{item['Listing id']}) "
     }
     requests.post(webhook_url, json=message)
 
@@ -101,7 +101,7 @@ def runShi2():
      for item in cheapStickeredItems:
         sendToDiscord(item)
 
-t = threading.Thread(target=timer,args=(runShi,runShi2))
+t = threading.Thread(target=timer,args=(runShi(),runShi2()))
 t.start()
 
 
