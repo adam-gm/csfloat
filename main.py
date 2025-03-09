@@ -61,6 +61,19 @@ def getLowStickerPercentage():
                     if (currentItem['price']-currentItem['reference']['base_price'])/stickerPrice < 0.1:
                         items.append({"Listing id":currentItem['id'],"Item name":currentItem['item']['market_hash_name'],"Profit margin":round(100*(1-currentItem['price']/currentItem['reference']['base_price']),3)})
         
+        responseStattrack = requests.get(csfloatAPIlink,headers=header,params={"sort_by":"most_recent","category":2,"type":"buy_now","max_price":165000})
+        jsonData2 = responseStattrack.json()
+        for i in range(len(jsonData2['data'])):
+            currentItem = jsonData2['data'][i]
+            stickerPrice = sum([sticker.get("reference",{}).get("price",0)/100 for sticker in currentItem["item"].get("stickers",[])])
+            if stickerPrice>0:
+                if currentItem['reference']['base_price'] > currentItem['reference']['predicted_price']:
+                    if (currentItem['price']-currentItem['reference']['predicted_price'])/stickerPrice < 0.1:
+                         items.append({"Listing id":currentItem['id'],"Item name":currentItem['item']['market_hash_name'],"Profit margin":round(100*(1-currentItem['price']/currentItem['reference']['predicted_price']),3)})
+                else:     
+                    if (currentItem['price']-currentItem['reference']['base_price'])/stickerPrice < 0.1:
+                        items.append({"Listing id":currentItem['id'],"Item name":currentItem['item']['market_hash_name'],"Profit margin":round(100*(1-currentItem['price']/currentItem['reference']['base_price']),3)})
+
         return sorted(items,key=lambda d:d['Profit margin'],reverse=False)
 
 cheapItems = getCrazyCheap()

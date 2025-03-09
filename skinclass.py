@@ -35,13 +35,4 @@ class Skin:
         self.cheapestItems = sorted(updatedList,key=lambda d:d["Price"]) #Sort array by price by using lambda function. Basically updatedList['price']
 
 
-    #Make method to return items cheaper than recommended
-    def getCrazyCheap(self):
-        items = []
-        response = requests.get(Skin.csfloatAPIlink,headers=Skin.header,params={"type":"buy_now","max_price":165000})
-        jsonData = response.json()
-
-        for i in range(len(jsonData['data'])):
-            currentItem = jsonData['data'][i]
-            if currentItem['price'] < currentItem['reference']['predicted_price']:
-                items.append({"Listing id":currentItem['id'],"Item name":currentItem['item']['market_hash_name'],"Profit after fee":(-currentItem['price']+currentItem['reference']['predicted_price'])*0.98})
+    
