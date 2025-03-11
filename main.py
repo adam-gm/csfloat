@@ -4,6 +4,8 @@ import pprint
 import threading
 import time
 import csv
+import joblib
+import pandas as pd
 #api key csfloat: Rd3UmYDMXvJlqwueoFJoaI11rpyuOHgv
 
 #all listings: https://csfloat.com/api/v1/listings
@@ -17,6 +19,8 @@ with open("api_key.txt","r") as f:
 header={
     "Authorization": api_key
     }
+
+loaded_model = joblib.load("./random_forest.joblib")
 
 desertHydraParameters={
     "market_hash_name": "AWP | Desert Hydra (Field-Tested)",
@@ -38,7 +42,6 @@ def getCrazyCheap():
         items = []
         response = requests.get(csfloatAPIlink,headers=header,params={"sort_by":"most_recent","min_ref_qty":20,"category":0,"type":"buy_now","max_price":165000})
         jsonData = response.json()
-
         for i in range(len(jsonData['data'])):
             currentItem = jsonData['data'][i]
             stickerPrice = sum([sticker.get("reference",{}).get("price",0)/100 for sticker in currentItem["item"].get("stickers",[])])
@@ -85,7 +88,6 @@ def getLowStickerPercentage():
         items = []
         response = requests.get(csfloatAPIlink,headers=header,params={"sort_by":"most_recent","category":1,"type":"buy_now","min_ref_qty":20,"max_price":165000})
         jsonData = response.json()
-
         for i in range(len(jsonData['data'])):
             currentItem = jsonData['data'][i]
             stickerPrice = sum([sticker.get("reference",{}).get("price",0)/100 for sticker in currentItem["item"].get("stickers",[])])
@@ -121,26 +123,23 @@ def timer(func1,func2):
         print("In while loop")
         func1()
         func2()
-        time.sleep(120) #ping every 2 minutes
+        time.sleep(60) 
 
 def sendToDiscord(item):
     webhook_url = 'https://discord.com/api/webhooks/1348735436876677341/ZCEz8_VAi23TXQUAVyUXHZE9AyiP-s8Vz9PdqzLvg8sblvoOC0p9i5hyUYgPYsy4Tx56'
     embeds =[{
         "title": f":fire: {item['Item name']} :fire:", 
         "description": f"Profit margin: **{item['Profit margin']}** \n [**LISTING**](https://csfloat.com/item/{item['Listing id']})",
-        "color": 1127128#,
-        #"image":{"url":f"https://community.cloudflare.steamstatic.com/economy/image/{item['Icon url']}"}
-    }]#,{
-    #     "title": "This is :fire:",
-    #     "color": 14177041
-    #}]
+        "color": 112712,
+        "image":{"url":f"https://community.cloudflare.steamstatic.com/economy/image/{item['Icon url']}"}
+        }]
     data = {
          "username":"csfloat scanner",
          "avatar_url":"https://imgur.com/gallery/incase-you-havent-seen-this-show-yet-NBEIFBz.png",
          "embeds":embeds
          }
-    resp = requests.post(webhook_url, json=data)
-    print(resp.status_code,resp.text)
+    requests.post(webhook_url, json=data)
+    
 
 def checkNotDuplicateListing(item):
     listing_id =  item["Listing id"]
@@ -155,7 +154,9 @@ def checkNotDuplicateListing(item):
             return False
      
 def runShi():
+    entries_to_remove = ('target', 'Listing id', 'Item name', 'Icon url')
     cheapItems = getCrazyCheap()
+    pprint.pprint(cheapItems)
     # Save to a CSV file
     filename = "data.txt"  # You can use .csv as well
     if(len(cheapItems))>0:
@@ -164,14 +165,23 @@ def runShi():
             for item in cheapItems:
                 if(checkNotDuplicateListing(item)):
                     #writer.writeheader()  # Write column names
-                    writer.writerow(item)  # Write rows
-                    sendToDiscord(item)
-    
-    pprint.pprint(cheapItems)
+                    writer.writerow(item)  # Write row
+                    editItem = item.copy()
+                    for k in entries_to_remove:
+                        editItem.pop(k, None)
+                    df = pd.DataFrame([editItem])
+                    prediction = loaded_model.predict(df)
+                    if(prediction[0]>0.5):
+                        print(f"Prediction for buying {item['Item name']}: ", prediction)
+                        sendToDiscord(item)
+                    else:
+                        print(f"Prediction for buying {item['Item name']}: ", prediction)
     
 
 def runShi2():
+    entries_to_remove = ('target', 'Listing id', 'Item name', 'Icon url')
     cheapStickeredItems = getLowStickerPercentage()
+    pprint.pprint(cheapStickeredItems)
     filename = "data.txt"  # You can use .csv as well
     if(len(cheapStickeredItems))>0:
         with open(filename, mode="a", newline="") as file:
@@ -180,10 +190,16 @@ def runShi2():
                 if(checkNotDuplicateListing(item)):
                     #writer.writeheader()  # Write column names
                     writer.writerow(item)  # Write rows
-                    sendToDiscord(item)
-    
-    pprint.pprint(cheapStickeredItems)
-    
+                    editItem = item.copy()
+                    for k in entries_to_remove:
+                        editItem.pop(k, None)
+                    df = pd.DataFrame([editItem])
+                    prediction = loaded_model.predict(df)
+                    if(prediction[0]>0.5):
+                        print(f"Prediction for buying {item['Item name']}: ", prediction)
+                        sendToDiscord(item)
+                    else:
+                        print(f"Prediction for buying {item['Item name']}: ", prediction)
 
 t = threading.Thread(target=timer,args=(runShi,runShi2))
 t.start()
