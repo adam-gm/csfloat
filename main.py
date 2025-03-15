@@ -8,6 +8,8 @@ import joblib
 import pandas as pd
 import statistics
 import json
+from forest import encoder
+
 #api key csfloat: Rd3UmYDMXvJlqwueoFJoaI11rpyuOHgv
 
 #all listings: https://csfloat.com/api/v1/listings
@@ -78,15 +80,15 @@ def funcd(currentItem):
     else:
         median_latest_sale = 0
     is_lower_median_sale = currentItem['price']<=median_latest_sale
-    return [relative_price_profit,buy_order_sell_price_ratio,is_lowest_price,is_lower_median_sale]
-#Legg t logikk i "getCrazyCheap" som sjekker at et outputtet item faktisk er den billigste av den typen på markedet.
+    return [relative_price_profit,buy_order_sell_price_ratio,is_lowest_price,is_lower_median_sale,median_latest_sale]
+
 def writeJsonToFile(filename,data):
     with open(filename,mode='w') as file:
         json.dump(data,file,indent=4)
 
 def getCrazyCheap():
         items = []
-        response = requests.get(csfloatAPIlink,headers=header,params={"sort_by":"most_recent","min_ref_qty":20,"category":0,"type":"buy_now","max_price":165000})
+        response = requests.get(csfloatAPIlink,headers=header,params={"sort_by":"most_recent","min_price":200,"max_price":25000,"min_ref_qty":20,"category":0,"type":"buy_now"})
         jsonData = response.json()
         for i in range(len(jsonData['data'])):
             currentItem = jsonData['data'][i]
@@ -101,10 +103,11 @@ def getCrazyCheap():
 
                 if currentItem['price'] < currentItem['reference']['predicted_price']:
                     array = funcd(currentItem)
-                    items.append({"Listing id":currentItem['id'],"Item name":currentItem['item']['market_hash_name'],"Profit margin":round(100*(1-currentItem['price']/currentItem['reference']['predicted_price']),3),"Lowest calculated price":currentItem['reference']['predicted_price'],"Sale price":currentItem['price'],"Sticker percentage":stickerPercentage,"Sticker price":stickerPrice,"Icon url":currentItem['item']['icon_url'],"def_index":currentItem['item']['def_index'],"paint_index":currentItem['item'].get('paint_index',0),"float_value":currentItem['item'].get('float_value',0),"is_stattrak":currentItem['item'].get('is_stattrak',0),"is_souvenir":currentItem['item'].get('is_souvenir',0),"sticker_index":currentItem['item'].get("sticker_index",0),"is_commodity":currentItem['item'].get('is_commodity',0),"keychain_index":currentItem['item'].get('keychain_index',0),"rarity":currentItem['item'].get('rarity',0),"relative_price_profit":array[0],"is_lowest_price":array[2],"is_lower_median_sale":array[3],"sellprice_buyorder_ratio":array[1],"paint_seed":currentItem['item'].get("paint_seed",0),"target":"sjekk"})
-                elif stickerPrice > 0 and stickerPercentage< 0.1:
+                    if currentItem['price']/0.98<array[4]:
+                        items.append({"Listing id":currentItem['id'],"Item name":currentItem['item']['market_hash_name'],"Profit margin":round(100*(1-currentItem['price']/currentItem['reference']['predicted_price']),3),"Lowest calculated price":currentItem['reference']['predicted_price'],"Sale price":currentItem['price'],"Sticker percentage":stickerPercentage,"Sticker price":stickerPrice,"Icon url":currentItem['item']['icon_url'],"def_index":currentItem['item']['def_index'],"paint_index":currentItem['item'].get('paint_index',0),"float_value":currentItem['item'].get('float_value',0),"is_stattrak":currentItem['item'].get('is_stattrak',0),"is_souvenir":currentItem['item'].get('is_souvenir',0),"sticker_index":currentItem['item'].get("sticker_index",0),"is_commodity":currentItem['item'].get('is_commodity',0),"keychain_index":currentItem['item'].get('keychain_index',0),"rarity":currentItem['item'].get('rarity',0),"relative_price_profit":array[0],"is_lowest_price":array[2],"is_lower_median_sale":array[3],"sellprice_buyorder_ratio":array[1],"paint_seed":currentItem['item'].get("paint_seed",0),"wear_name":currentItem['item'].get('wear_name','none'),"target":"sjekk"})
+                elif stickerPrice > 0 and stickerPercentage< 0.05:
                     array = funcd(currentItem)
-                    items.append({"Listing id":currentItem['id'],"Item name":currentItem['item']['market_hash_name'],"Profit margin":round(100*(1-currentItem['price']/currentItem['reference']['predicted_price']),3),"Lowest calculated price":currentItem['reference']['predicted_price'],"Sale price":currentItem['price'],"Sticker percentage":stickerPercentage,"Sticker price":stickerPrice,"Icon url":currentItem['item']['icon_url'],"def_index":currentItem['item']['def_index'],"paint_index":currentItem['item'].get('paint_index',0),"float_value":currentItem['item'].get('float_value',0),"is_stattrak":currentItem['item'].get('is_stattrak',0),"is_souvenir":currentItem['item'].get('is_souvenir',0),"sticker_index":currentItem['item'].get("sticker_index",0),"is_commodity":currentItem['item'].get('is_commodity',0),"keychain_index":currentItem['item'].get('keychain_index',0),"rarity":currentItem['item'].get('rarity',0),"relative_price_profit":array[0],"is_lowest_price":array[2],"is_lower_median_sale":array[3],"sellprice_buyorder_ratio":array[1],"paint_seed":currentItem['item'].get("paint_seed",0),"target":"sjekk"})                
+                    items.append({"Listing id":currentItem['id'],"Item name":currentItem['item']['market_hash_name'],"Profit margin":round(100*(1-currentItem['price']/currentItem['reference']['predicted_price']),3),"Lowest calculated price":currentItem['reference']['predicted_price'],"Sale price":currentItem['price'],"Sticker percentage":stickerPercentage,"Sticker price":stickerPrice,"Icon url":currentItem['item']['icon_url'],"def_index":currentItem['item']['def_index'],"paint_index":currentItem['item'].get('paint_index',0),"float_value":currentItem['item'].get('float_value',0),"is_stattrak":currentItem['item'].get('is_stattrak',0),"is_souvenir":currentItem['item'].get('is_souvenir',0),"sticker_index":currentItem['item'].get("sticker_index",0),"is_commodity":currentItem['item'].get('is_commodity',0),"keychain_index":currentItem['item'].get('keychain_index',0),"rarity":currentItem['item'].get('rarity',0),"relative_price_profit":array[0],"is_lowest_price":array[2],"is_lower_median_sale":array[3],"sellprice_buyorder_ratio":array[1],"paint_seed":currentItem['item'].get("paint_seed",0),"wear_name":currentItem['item'].get('wear_name','none'),"target":"sjekk"})                
             else:
                 if stickerPrice>0:
                         stickerPercentage = (currentItem['price']-currentItem['reference']['base_price'])/stickerPrice
@@ -113,10 +116,11 @@ def getCrazyCheap():
 
                 if currentItem['price'] < currentItem['reference']['base_price']:
                     array = funcd(currentItem)
-                    items.append({"Listing id":currentItem['id'],"Item name":currentItem['item']['market_hash_name'],"Profit margin":round(100*(1-currentItem['price']/currentItem['reference']['base_price']),3),"Lowest calculated price":currentItem['reference']['base_price'],"Sale price":currentItem['price'],"Sticker percentage":stickerPercentage,"Sticker price":stickerPrice,"Icon url":currentItem['item']['icon_url'],"def_index":currentItem['item']['def_index'],"paint_index":currentItem['item'].get('paint_index',0),"float_value":currentItem['item'].get('float_value',0),"is_stattrak":currentItem['item'].get('is_stattrak',0),"is_souvenir":currentItem['item'].get('is_souvenir',0),"sticker_index":currentItem['item'].get("sticker_index",0),"is_commodity":currentItem['item'].get('is_commodity',0),"keychain_index":currentItem['item'].get('keychain_index',0),"rarity":currentItem['item'].get('rarity',0),"relative_price_profit":array[0],"is_lowest_price":array[2],"is_lower_median_sale":array[3],"sellprice_buyorder_ratio":array[1],"paint_seed":currentItem['item'].get("paint_seed",0),"target":"sjekk"})                
-                elif stickerPrice > 0 and stickerPercentage< 0.1:
+                    if currentItem['price']/0.98<array[4]:
+                        items.append({"Listing id":currentItem['id'],"Item name":currentItem['item']['market_hash_name'],"Profit margin":round(100*(1-currentItem['price']/currentItem['reference']['base_price']),3),"Lowest calculated price":currentItem['reference']['base_price'],"Sale price":currentItem['price'],"Sticker percentage":stickerPercentage,"Sticker price":stickerPrice,"Icon url":currentItem['item']['icon_url'],"def_index":currentItem['item']['def_index'],"paint_index":currentItem['item'].get('paint_index',0),"float_value":currentItem['item'].get('float_value',0),"is_stattrak":currentItem['item'].get('is_stattrak',0),"is_souvenir":currentItem['item'].get('is_souvenir',0),"sticker_index":currentItem['item'].get("sticker_index",0),"is_commodity":currentItem['item'].get('is_commodity',0),"keychain_index":currentItem['item'].get('keychain_index',0),"rarity":currentItem['item'].get('rarity',0),"relative_price_profit":array[0],"is_lowest_price":array[2],"is_lower_median_sale":array[3],"sellprice_buyorder_ratio":array[1],"paint_seed":currentItem['item'].get("paint_seed",0),"wear_name":currentItem['item'].get('wear_name','none'),"target":"sjekk"})                
+                elif stickerPrice > 0 and stickerPercentage< 0.05:
                     array = funcd(currentItem)
-                    items.append({"Listing id":currentItem['id'],"Item name":currentItem['item']['market_hash_name'],"Profit margin":round(100*(1-currentItem['price']/currentItem['reference']['base_price']),3),"Lowest calculated price":currentItem['reference']['base_price'],"Sale price":currentItem['price'],"Sticker percentage":stickerPercentage,"Sticker price":stickerPrice,"Icon url":currentItem['item']['icon_url'],"def_index":currentItem['item']['def_index'],"paint_index":currentItem['item'].get('paint_index',0),"float_value":currentItem['item'].get('float_value',0),"is_stattrak":currentItem['item'].get('is_stattrak',0),"is_souvenir":currentItem['item'].get('is_souvenir',0),"sticker_index":currentItem['item'].get("sticker_index",0),"is_commodity":currentItem['item'].get('is_commodity',0),"keychain_index":currentItem['item'].get('keychain_index',0),"rarity":currentItem['item'].get('rarity',0),"relative_price_profit":array[0],"is_lowest_price":array[2],"is_lower_median_sale":array[3],"sellprice_buyorder_ratio":array[1],"paint_seed":currentItem['item'].get("paint_seed",0),"target":"sjekk"})                
+                    items.append({"Listing id":currentItem['id'],"Item name":currentItem['item']['market_hash_name'],"Profit margin":round(100*(1-currentItem['price']/currentItem['reference']['base_price']),3),"Lowest calculated price":currentItem['reference']['base_price'],"Sale price":currentItem['price'],"Sticker percentage":stickerPercentage,"Sticker price":stickerPrice,"Icon url":currentItem['item']['icon_url'],"def_index":currentItem['item']['def_index'],"paint_index":currentItem['item'].get('paint_index',0),"float_value":currentItem['item'].get('float_value',0),"is_stattrak":currentItem['item'].get('is_stattrak',0),"is_souvenir":currentItem['item'].get('is_souvenir',0),"sticker_index":currentItem['item'].get("sticker_index",0),"is_commodity":currentItem['item'].get('is_commodity',0),"keychain_index":currentItem['item'].get('keychain_index',0),"rarity":currentItem['item'].get('rarity',0),"relative_price_profit":array[0],"is_lowest_price":array[2],"is_lower_median_sale":array[3],"sellprice_buyorder_ratio":array[1],"paint_seed":currentItem['item'].get("paint_seed",0),"wear_name":currentItem['item'].get('wear_name','none'),"target":"sjekk"})                
     
         # responseBestDeal = requests.get(csfloatAPIlink,headers=header,params={"sort_by":"best_deal","category":0,"type":"buy_now","max_price":165000,"min_ref_qty":20})
         # jsonData2 = responseBestDeal.json()
@@ -211,11 +215,11 @@ def checkNotDuplicateListing(item):
             return False
      
 def runShi():
-    #entries_to_remove = ('target', 'Listing id', 'Item name', 'Icon url')
+    #entries_to_remove = ('target', 'Listing id', 'Lowest calculated price','Sale price','Item name', 'Icon url')
     cheapItems = getCrazyCheap()
     pprint.pprint(cheapItems)
     # Save to a CSV file
-    filename = "new_data.txt"  # You can use .csv as well
+    filename = "new_data.txt"  
     if(len(cheapItems))>0:
         with open(filename, mode="a", newline="") as file:
             writer = csv.DictWriter(file, fieldnames=cheapItems[0].keys())
@@ -224,16 +228,23 @@ def runShi():
                     #writer.writeheader()  # Write column names
                     writer.writerow(item)  # Write row
                     sendToDiscord(item)
-                    #editItem = item.copy()
-                    #for k in entries_to_remove:
-                    #    editItem.pop(k, None)
-                    #df = pd.DataFrame([editItem])
-                    #prediction = loaded_model.predict(df)
-                    #if(prediction[0]>0.5):
-                    #    print(f"Prediction for buying {item['Item name']}: ", prediction)
-                    #    sendToDiscord(item)
-                   # else:
-                   #     print(f"Prediction for buying {item['Item name']}: ", prediction)
+                    # sale_price = item['Sale price']
+                    # item_id = item['Listing id']
+                    # editItem = item.copy()
+                    # for k in entries_to_remove:
+                    #     editItem.pop(k, None)
+                    # df = pd.DataFrame([editItem])
+                    # encoded_data = encoder.transform(df[['wear_name']])
+                    # X = pd.concat([df,encoded_data],axis=1).drop(columns="wear_name")
+                    # prediction = loaded_model.predict(X)
+                    # if(float(prediction[0])>0.5):
+                    #     print(f"Prediction for buying {item['Item name']}: ", prediction)
+                    #     #if sale_price <= 1552:
+                    #     #    response = requests.post(csfloat_purchaselink,headers=purchase_header,json={"total_price":sale_price,'contract_ids':[f"{item_id}"]})
+                    #     #    print(response)
+                    #     sendToDiscord(item)
+                    # else:
+                    #     print(f"Prediction for buying {item['Item name']}: ", prediction)
     
 
 # def runShi2():
