@@ -10,7 +10,6 @@ import statistics
 import json
 from forest import encoder
 
-#api key csfloat: Rd3UmYDMXvJlqwueoFJoaI11rpyuOHgv
 
 #all listings: https://csfloat.com/api/v1/listings
 #specific listing: https://csfloat.com/api/v1/listings/<ID>
